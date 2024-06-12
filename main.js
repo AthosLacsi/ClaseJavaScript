@@ -20,16 +20,32 @@ function calcularCostoTotal(producto, cantidad) {
 
 // Función para manejar la interacción con el usuario
 function simularCompra() {
-    let producto = prompt('Ingrese el nombre del producto (producto1, producto2 o producto3):');
-    let cantidad = parseInt(prompt('Ingrese la cantidad que desea comprar:'));
+    let numCompras = parseInt(prompt('Ingrese el número de productos diferentes que desea comprar:'));
 
-    // Verificar si el producto ingresado es válido
-    if (productos.hasOwnProperty(producto) && !isNaN(cantidad) && cantidad > 0) {
-        let costoTotal = calcularCostoTotal(producto, cantidad);
-        alert(`El costo total de la compra es: $${costoTotal.toFixed(2)}`);
-    } else {
-        alert('Producto inválido o cantidad no válida. Por favor, inténtelo nuevamente.');
+    // Verificar si la cantidad ingresada es válida
+    if (isNaN(numCompras) || numCompras <= 0) {
+        alert('Número de compras inválido. Por favor, inténtelo nuevamente.');
+        return;
     }
+
+    let totalCosto = 0;
+
+    for (let i = 0; i < numCompras; i++) {
+        let producto = prompt(`Ingrese el nombre del producto (producto1, producto2 o producto3) para la compra ${i + 1}:`);
+        let cantidad = parseInt(prompt(`Ingrese la cantidad que desea comprar del ${producto}:`));
+
+        // Verificar si el producto ingresado es válido
+        if (productos.hasOwnProperty(producto) && !isNaN(cantidad) && cantidad > 0) {
+            let costoTotal = calcularCostoTotal(producto, cantidad);
+            totalCosto += costoTotal;
+            console.log(`El costo total de la compra del ${producto} es: $${costoTotal.toFixed(2)}`);
+        } else {
+            alert('Producto inválido o cantidad no válida. Por favor, inténtelo nuevamente.');
+            i--; // Restar uno para repetir la iteración para este producto
+        }
+    }
+
+    alert(`El costo total de todas las compras es: $${totalCosto.toFixed(2)}`);
 }
 
 // Ejecutar la simulación de compra al cargar la página
