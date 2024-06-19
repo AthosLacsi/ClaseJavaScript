@@ -7,7 +7,7 @@ const productos = {
 
 // Función para calcular el costo total de la compra
 function calcularCostoTotal(producto, cantidad) {
-    let precio = productos[producto];
+    const precio = productos[producto];
     let costoTotal = precio * cantidad;
 
     // Aplicar un descuento del 10% si la cantidad es mayor a 5
@@ -20,7 +20,7 @@ function calcularCostoTotal(producto, cantidad) {
 
 // Función para manejar la interacción con el usuario
 function simularCompra() {
-    let numCompras = parseInt(prompt('Ingrese el número de productos diferentes que desea comprar:'));
+    const numCompras = parseInt(prompt('Ingrese el número de productos diferentes que desea comprar:'));
 
     // Verificar si la cantidad ingresada es válida
     if (isNaN(numCompras) || numCompras <= 0) {
@@ -28,22 +28,31 @@ function simularCompra() {
         return;
     }
 
-    let totalCosto = 0;
+    const compras = [];
 
     for (let i = 0; i < numCompras; i++) {
-        let producto = prompt(`Ingrese el nombre del producto (producto1, producto2 o producto3) para la compra ${i + 1}:`);
-        let cantidad = parseInt(prompt(`Ingrese la cantidad que desea comprar del ${producto}:`));
+        const producto = prompt(`Ingrese el nombre del producto (producto1, producto2 o producto3) para la compra ${i + 1}:`);
+        const cantidad = parseInt(prompt(`Ingrese la cantidad que desea comprar del ${producto}:`));
 
         // Verificar si el producto ingresado es válido
         if (productos.hasOwnProperty(producto) && !isNaN(cantidad) && cantidad > 0) {
-            let costoTotal = calcularCostoTotal(producto, cantidad);
-            totalCosto += costoTotal;
-            console.log(`El costo total de la compra del ${producto} es: $${costoTotal.toFixed(2)}`);
+            compras.push({ producto, cantidad });
         } else {
             alert('Producto inválido o cantidad no válida. Por favor, inténtelo nuevamente.');
             i--; // Restar uno para repetir la iteración para este producto
         }
     }
+
+    // Calcular el costo total usando reduce
+    const totalCosto = compras.reduce((total, compra) => {
+        return total + calcularCostoTotal(compra.producto, compra.cantidad);
+    }, 0);
+
+    // Mostrar el costo total de cada compra y el total general
+    compras.forEach(compra => {
+        const costoTotal = calcularCostoTotal(compra.producto, compra.cantidad);
+        console.log(`El costo total de la compra del ${compra.producto} es: $${costoTotal.toFixed(2)}`);
+    });
 
     alert(`El costo total de todas las compras es: $${totalCosto.toFixed(2)}`);
 }
