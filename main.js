@@ -1,61 +1,146 @@
-// Definir un objeto con los productos disponibles y sus precios
-const productos = {
-    'producto1': 10000,
-    'producto2': 15000,
-    'producto3': 20000
-};
+document.addEventListener("DOMContentLoaded", () => {
+    const productForm = document.getElementById('product-form');
+    const productSelect = document.getElementById('product-select');
+    const quantityInput = document.getElementById('product-quantity');
+    const productList = document.getElementById('product-list');
+    const totalPriceElement = document.getElementById('total-price');
+    const purchaseButton = document.getElementById('purchase-button');
+    let total = 0;
 
-// Función para calcular el costo total de la compra
-function calcularCostoTotal(producto, cantidad) {
-    const precio = productos[producto];
-    let costoTotal = precio * cantidad;
+    const products = {
+        "Muñeco Frutilla - 7000": 7000,
+        "Muñeco Pikachu - 8900": 8900,
+        "Muñeco Luffy - 12000": 12000
+    };
 
-    // Aplicar un descuento del 10% si la cantidad es mayor a 5
-    if (cantidad > 5) {
-        costoTotal *= 0.9; // Aplicar descuento del 10%
+    // Función para cargar productos desde el almacenamiento local
+    function loadProducts() {
+        let storedProducts = JSON.parse(localStorage.getItem('products')) || [];
+        storedProducts.forEach(addProductToDOM);
+        updateTotalPrice();
     }
 
-    return costoTotal;
-}
-
-// Función para manejar la interacción con el usuario
-function simularCompra() {
-    const numCompras = parseInt(prompt('Ingrese el número de productos diferentes que desea comprar:'));
-
-    // Verificar si la cantidad ingresada es válida
-    if (isNaN(numCompras) || numCompras <= 0) {
-        alert('Número de compras inválido. Por favor, inténtelo nuevamente.');
-        return;
+    // Función para agregar producto al DOM
+    function addProductToDOM(product) {
+        const li = document.createElement('li');
+        li.textContent = `${product.name} x${product.quantity} - $${product.price * product.quantity}`;
+        const deleteBtn = document.createElement('span');
+        deleteBtn.textContent = 'X';
+        deleteBtn.classList.add('delete');
+        li.appendChild(deleteBtn);
+        productList.appendChild(li);
     }
 
-    const compras = [];
+    // Función para guardar productos en el almacenamiento local
+    function saveProducts() {
+        const storedProducts = [];
+        productList.querySelectorAll('li').forEach(li => {
+            const [nameQuantity, price] = li.firstChild.textContent.split(' - $');
+            const [name, quantity] = nameQuantity.split(' x');
+            storedProducts.push({ name, quantity: parseInt(quantity), price: products[name] });
+        });
+        localStorage.setItem('products', JSON.stringify(storedProducts));
+    }
 
-    for (let i = 0; i < numCompras; i++) {
-        const producto = prompt(`Ingrese el nombre del producto (producto1, producto2 o producto3) para la compra ${i + 1}:`);
-        const cantidad = parseInt(prompt(`Ingrese la cantidad que desea comprar del ${producto}:`));
+    // Función para actualizar el precio total
+    function updateTotalPrice() {
+        total = 0;
+        productList.querySelectorAll('li').forEach(li => {
+            const [, price] = li.firstChild.textContent.split(' - $');
+            total += parseFloat(price);
+        });
+        totalPriceElement.textContent = `Total: $${total.toFixed(2)}`;
+    }
 
-        // Verificar si el producto ingresado es válido
-        if (productos.hasOwnProperty(producto) && !isNaN(cantidad) && cantidad > 0) {
-            compras.push({ producto, cantidad });
-        } else {
-            alert('Producto inválido o cantidad no válida. Por favor, inténtelo nuevamente.');
-            i--; // Restar uno para repetir la iteración para este producto
+    // Evento para agregar un nuevo producto
+    productForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const selectedProduct = productSelect.value;
+        const productQuantity = parseInt(quantityInput.value);
+        if (selectedProduct && !isNaN(productQuantity)) {
+            const productPrice = products[selectedProduct];
+            addProductToDOM({ name: selectedProduct, quantity: productQuantity, price: productPrice });
+            saveProducts();
+            updateTotalPrice();
+            productSelect.value = '';
+            quantityInput.value = '';
+            // Mostrar alerta de éxito
+            Swal.fire({
+                icon: "success",
+                title: "Producto agregado",
+                showConfirmButton: false,
+                timer: 1500
+            });
         }
-    }
-
-    // Calcular el costo total usando reduce
-    const totalCosto = compras.reduce((total, compra) => {
-        return total + calcularCostoTotal(compra.producto, compra.cantidad);
-    }, 0);
-
-    // Mostrar el costo total de cada compra y el total general
-    compras.forEach(compra => {
-        const costoTotal = calcularCostoTotal(compra.producto, compra.cantidad);
-        console.log(`El costo total de la compra del ${compra.producto} es: $${costoTotal.toFixed(2)}`);
     });
 
-    alert(`El costo total de todas las compras es: $${totalCosto.toFixed(2)}`);
-}
+    // Evento para eliminar un producto
+    productList.addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete')) {
+            // Mostrar alerta de confirmación
+            Swal.fire({
+                title: "¿Estás seguro?",
+                text: "¡No podrás revertir esto!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "¡Sí, bórralo!",
+                customClass: {
+                    popup: 'swal-center',
+                    actions: 'swal-actions-center'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Elimina el producto solo si el usuario confirma
+                    e.target.parentElement.remove();
+                    saveProducts();
+                    updateTotalPrice();
+                    // Mostrar alerta de éxito
+                    Swal.fire({
+                        title: "¡Eliminado!",
+                        text: "El producto ha sido eliminado.",
+                        icon: "success",
+                        customClass: {
+                            popup: 'swal-center',
+                            actions: 'swal-actions-center'
+                        }
+                    });
+                }
+            });
+        }
+    });
 
-// Ejecutar la simulación de compra al cargar la página
-simularCompra();
+    // Evento para realizar la compra
+    purchaseButton.addEventListener('click', () => {
+        if (total > 0) {
+            Swal.fire({
+                title: "Compra realizada",
+                text: `El total de tu compra es $${total.toFixed(2)}`,
+                icon: "success",
+                customClass: {
+                    popup: 'swal-center',
+                    actions: 'swal-actions-center'
+                }
+            }).then(() => {
+                // Reiniciar la lista de productos y el total
+                productList.innerHTML = '';
+                saveProducts();
+                updateTotalPrice();
+            });
+        } else {
+            Swal.fire({
+                title: "Error",
+                text: "No hay productos en la lista.",
+                icon: "error",
+                customClass: {
+                    popup: 'swal-center',
+                    actions: 'swal-actions-center'
+                }
+            });
+        }
+    });
+
+    // Cargar productos guardados al inicio
+    loadProducts();
+});

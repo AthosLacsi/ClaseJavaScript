@@ -3,11 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JavaScript</title>
+    <title>Puchigurumis</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
-    HELLO WORLD!
-
+    <div class="container">
+        <h1>Compra de Puchigurumis</h1>
+        <h2>(Muñecos tejidos a mano)</h2>
+        <form id="product-form">
+            <select id="product-select" required>
+                <option value="" disabled selected>Selecciona un producto</option>
+                <option value="Muñeco Frutilla - 7000">Muñeco Frutilla - $7000</option>
+                <option value="Muñeco Pikachu - 8900">Muñeco Pikachu - $8900</option>
+                <option value="Muñeco Luffy - 12000">Muñeco Luffy - $12000</option>
+            </select>
+            <input type="number" id="product-quantity" placeholder="Cantidad" required>
+            <button type="submit">Agregar</button>
+        </form>
+        <ul id="product-list"></ul>
+        <div id="total-price">Total: $0</div>
+        <button id="purchase-button">Realizar Compra</button>
+    </div>
     <script src="main.js"></script>
 </body>
 </html>
