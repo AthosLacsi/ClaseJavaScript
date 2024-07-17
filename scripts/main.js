@@ -6,21 +6,34 @@ document.addEventListener("DOMContentLoaded", () => {
     const totalPriceElement = document.getElementById('total-price');
     const purchaseButton = document.getElementById('purchase-button');
     let total = 0;
+    let products = [];
 
-    const products = {
-        "Muñeco Frutilla - 7000": 7000,
-        "Muñeco Pikachu - 8900": 8900,
-        "Muñeco Luffy - 12000": 12000
-    };
-
-    // Función para cargar productos desde el almacenamiento local
     function loadProducts() {
+        fetch('scripts/product.json')
+            .then(response => response.json())
+            .then(data => {
+                products = data;
+                populateProductSelect();
+                loadStoredProducts();
+            })
+            .catch(error => console.error('Error al cargar los productos:', error));
+    }
+
+    function populateProductSelect() {
+        products.forEach(product => {
+            const option = document.createElement('option');
+            option.value = product.name;
+            option.textContent = `${product.name} - $${product.price}`;
+            productSelect.appendChild(option);
+        });
+    }
+
+    function loadStoredProducts() {
         let storedProducts = JSON.parse(localStorage.getItem('products')) || [];
         storedProducts.forEach(addProductToDOM);
         updateTotalPrice();
     }
 
-    // Función para agregar producto al DOM
     function addProductToDOM(product) {
         const li = document.createElement('li');
         li.textContent = `${product.name} x${product.quantity} - $${product.price * product.quantity}`;
@@ -30,54 +43,53 @@ document.addEventListener("DOMContentLoaded", () => {
         li.appendChild(deleteBtn);
         productList.appendChild(li);
     }
-
-    // Función para guardar productos en el almacenamiento local
     function saveProducts() {
         const storedProducts = [];
         productList.querySelectorAll('li').forEach(li => {
-            const [nameQuantity, price] = li.firstChild.textContent.split(' - $');
+            const [nameQuantity, price] = li.textContent.split(' - $');
             const [name, quantity] = nameQuantity.split(' x');
-            storedProducts.push({ name, quantity: parseInt(quantity), price: products[name] });
+            const product = products.find(p => p.name === name);
+            if (product) {
+                storedProducts.push({ name, quantity: parseInt(quantity), price: product.price });
+            }
         });
         localStorage.setItem('products', JSON.stringify(storedProducts));
     }
-
-    // Función para actualizar el precio total
     function updateTotalPrice() {
         total = 0;
         productList.querySelectorAll('li').forEach(li => {
-            const [, price] = li.firstChild.textContent.split(' - $');
+            const [, price] = li.textContent.split(' - $');
             total += parseFloat(price);
         });
         totalPriceElement.textContent = `Total: $${total.toFixed(2)}`;
     }
-
-    // Evento para agregar un nuevo producto
     productForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const selectedProduct = productSelect.value;
+        const selectedProductName = productSelect.value;
         const productQuantity = parseInt(quantityInput.value);
-        if (selectedProduct && !isNaN(productQuantity)) {
-            const productPrice = products[selectedProduct];
-            addProductToDOM({ name: selectedProduct, quantity: productQuantity, price: productPrice });
+        const selectedProduct = products.find(p => p.name === selectedProductName);
+        if (selectedProduct && !isNaN(productQuantity) && productQuantity > 0) {
+            addProductToDOM({ name: selectedProductName, quantity: productQuantity, price: selectedProduct.price });
             saveProducts();
             updateTotalPrice();
             productSelect.value = '';
             quantityInput.value = '';
-            // Mostrar alerta de éxito
             Swal.fire({
                 icon: "success",
                 title: "Producto agregado",
                 showConfirmButton: false,
-                timer: 1500
+                timer: 1500,
+                customClass: {
+                    popup: 'swal-center',
+                    actions: 'swal-actions-center'
+                }
             });
         }
     });
 
-    // Evento para eliminar un producto
+
     productList.addEventListener('click', (e) => {
         if (e.target.classList.contains('delete')) {
-            // Mostrar alerta de confirmación
             Swal.fire({
                 title: "¿Estás seguro?",
                 text: "¡No podrás revertir esto!",
@@ -86,17 +98,16 @@ document.addEventListener("DOMContentLoaded", () => {
                 confirmButtonColor: "#3085d6",
                 cancelButtonColor: "#d33",
                 confirmButtonText: "¡Sí, bórralo!",
+                cancelButtonText: "Cancelar",
                 customClass: {
                     popup: 'swal-center',
                     actions: 'swal-actions-center'
                 }
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Elimina el producto solo si el usuario confirma
                     e.target.parentElement.remove();
                     saveProducts();
                     updateTotalPrice();
-                    // Mostrar alerta de éxito
                     Swal.fire({
                         title: "¡Eliminado!",
                         text: "El producto ha sido eliminado.",
@@ -111,7 +122,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Evento para realizar la compra
     purchaseButton.addEventListener('click', () => {
         if (total > 0) {
             Swal.fire({
@@ -123,7 +133,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     actions: 'swal-actions-center'
                 }
             }).then(() => {
-                // Reiniciar la lista de productos y el total
                 productList.innerHTML = '';
                 saveProducts();
                 updateTotalPrice();
@@ -141,6 +150,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    // Cargar productos guardados al inicio
     loadProducts();
 });
+
+
+
+
+
+
